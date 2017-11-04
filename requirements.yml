@@ -1,0 +1,11 @@
+---
+
+- role: tklo.hostname
+- role: tklo.hosts-file
+- role: geerlingguy.java
+- src: https://github.com/AnsibleShipyard/ansible-zookeeper
+- src: https://github.com/AnsibleShipyard/ansible-mesos
+- src: https://github.com/AnsibleShipyard/ansible-marathon
+- src: https://github.com/teralytics/ansible-marathon-module
+  name: marathon-deploy
+- role: azavea.spark

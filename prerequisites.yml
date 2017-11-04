@@ -1,0 +1,26 @@
+---
+
+- hosts: master
+  remote_user: ubuntu
+  vars:
+    cluster_group: master
+
+  pre_tasks:
+    # TODO: Add /etc/hosts entires on the control machine
+    # - name: Local /etc/hosts check
+
+    # Information about hosts
+    - debug: msg="Host {{ inventory_hostname }} - Group {{ group_names | last }} ({{ groups[(group_names | last)].index(inventory_hostname) | int + 1 }}/{{ groups[(group_names | last)] | length }})"
+
+    # Install OpenJDK 8 repo
+    - apt_repository:
+        repo: 'ppa:openjdk-r/ppa'
+    # - package: name="openjdk-8-jdk" state=installed
+
+
+  roles:
+    - role: tklo.hostname
+    - role: tklo.hosts-file
+    - role: geerlingguy.java
+      java_packages:
+        - openjdk-8-jdk

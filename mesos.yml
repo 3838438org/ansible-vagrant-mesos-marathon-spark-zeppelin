@@ -1,0 +1,51 @@
+---
+
+- hosts: master
+  remote_user: ubuntu
+  vars:
+    cluster_group: master
+
+  pre_tasks:
+    - name: Install docker.io
+      package: name="docker.io" state="installed"
+
+
+  roles:
+    - role: ansible-mesos
+      mesos_install_mode: "master-slave"
+      mesos_ip: "{{ ansible_host }}"
+      mesos_slave_additional_configs:
+        - name: "JAVA_OPTS"
+          value: "'-Xmx1536m -Xms1024m'"
+      java_packages:
+        - openjdk-8-jdk
+
+  tasks:
+    # Start Mesos
+    - service: name="{{ item }}" state=started
+      with_items:
+        - mesos-master
+        - mesos-slave
+
+    # Verify Mesos
+    - shell: /usr/share/zookeeper/bin/zkCli.sh ls /
+      register: zkcli_status
+
+    - name: Check if marathon is registered in ZooKeeper
+      debug: var=zkcli_status
+
+    - shell: "netstat -tulnp | grep mesos"
+      changed_when: False
+      register: meso_status_ports
+
+    - name: Mesos port binding status
+      debug: var=meso_status_ports.stdout_lines
+
+    - name: Test for Mesos master endpoint
+      uri:
+        url: "http://{{ ansible_host }}:5050/"
+        method: GET
+      register: response
+
+    - name: Mesos master url check
+      debug: var=response

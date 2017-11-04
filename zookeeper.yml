@@ -1,0 +1,26 @@
+---
+- hosts: master
+  remote_user: ubuntu
+  vars:
+    cluster_group: master
+
+  roles:
+    - role: ansible-zookeeper
+      zookeeper_hosts: "{{ groups[cluster_group]|map('extract', hostvars, 'inventory_hostname')|list }}"
+      tags:
+        - zookeeper
+
+  tasks:
+    # Start ZooKeeper
+    - service: name=zookeeper state=started
+
+    # Verify ZooKeeper
+    - shell: "/opt/zookeeper-3.4.6/bin/zkServer.sh status"
+      changed_when: False
+      register: zookeeper_status
+
+    - name: ZooKeeper status
+      debug: var="{{ item }}"
+      with_items:
+        - zookeeper_status.stdout_lines
+        # - zookeeper_status.stderr_lines

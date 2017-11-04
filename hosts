@@ -1,0 +1,4 @@
+[master]
+master01.tera.local ansible_host=192.168.33.101
+master02.tera.local ansible_host=192.168.33.102
+master03.tera.local ansible_host=192.168.33.103

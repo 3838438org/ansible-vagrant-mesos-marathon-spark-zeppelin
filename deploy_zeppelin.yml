@@ -1,0 +1,70 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+
+    app:
+      id: zeppelin1
+      instances: 1
+      cpus: 1
+      mem: 1000
+      container:
+          type: "DOCKER"
+          docker:
+            # image: "apache/zeppelin:0.7.2"
+            image: "datastrophic/mesos-spark-zeppelin:mesos-1.1.0-spark-2.1.0-zeppelin-0.7.0"
+            # network: "BRIDGE"
+            network: "HOST"
+            privileged: true
+            forcePullImage: true
+            portMappings:
+              - containerPort: 10000
+                hostPort: 10000
+              - containerPort: 4040
+                hostPort: 4040
+            ports:
+              - 10000
+              - 4040
+            requirePorts: true
+          volumes:
+              - containerPath: "/usr/lib/spark/"
+                hostPath: "/usr/lib/spark/"
+                mode: "RW"
+              - containerPath: "/etc/spark"
+                hostPath: "/etc/spark"
+                mode: "RW"
+              - containerPath: "/var/lib/spark"
+                hostPath: "/var/lib/spark"
+                mode: "RW"
+              - containerPath: "/var/lib/spark"
+                hostPath: "/var/lib/spark"
+                mode: "RW"
+              # - containerPath: "/usr/local/lib/"
+              #   hostPath: "/usr/lib/"
+              #   mode: "RW"
+
+      env:
+        SPARK_HOME: "/usr/lib/spark"
+        ZEPPELIN_PORT: "10000"
+        ZEPPELIN_MEM: "-Xmx1000m -XX:MaxPermSize=500m"
+        MASTER: "mesos://zk://192.168.33.101:2181/mesos"
+        MESOS_NATIVE_LIBRARY: "/usr/lib/libmesos.so"
+        # SPARK_EXECUTOR_URI: "http://d3kbcqa49mib13.cloudfront.net/spark-2.2.0-bin-hadoop2.6.tgz"
+      healthChecks: []
+      upgradeStrategy:
+          maximumOverCapacity: 0
+          minimumHealthCapacity: 0
+      labels:
+          "MARATHON_SINGLE_INSTANCE_APP": "true"
+
+  # TODO: Ensure marathon python module is installed on the control machine
+  # pre_tasks:
+  #   - shell: pip install -r roles/marathon-deploy/requirements.txt
+
+  roles:
+    - marathon-deploy
+  tasks:
+    - name: run Zeppelin on marathon
+      marathon: uri=http://{{ hostvars['master01.tera.local'].ansible_host }}:8080 app='{{ app | to_json }}' state=present

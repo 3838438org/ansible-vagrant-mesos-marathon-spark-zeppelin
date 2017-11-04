@@ -1,0 +1,21 @@
+---
+- hosts: master
+  remote_user: ubuntu
+  vars:
+    cluster_group: master
+
+  roles:
+    - role: azavea.spark
+      spark_version: "2.1.0-bin-hadoop2.6"
+      # spark_version: "1.6.0-bin-hadoop2.6"
+      spark_env_extras:
+        MESOS_NATIVE_LIBRARY: "/usr/local/lib/libmesos.so"
+
+  tasks:
+    # Verify Spark
+    - shell: "/usr/lib/spark/bin/run-example SparkPi 10"
+      changed_when: False
+      register: spark_example_job
+
+    - name: Spark status
+      debug: var=spark_example_job.stdout

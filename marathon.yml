@@ -1,0 +1,39 @@
+---
+
+- hosts: master
+  remote_user: ubuntu
+  vars:
+    cluster_group: master
+
+  pre_tasks:
+
+    - name: Install docker.io
+      package: name="docker.io" state="installed"
+
+  roles:
+    - role: ansible-marathon
+      marathon_env_java_opts: '-Xmx1536m'
+      marathon_version: "1.4.3"
+
+  tasks:
+    # Start Marathon
+    - service: name=marathon state=started
+
+    # Verify Marathon
+    - shell: /usr/share/zookeeper/bin/zkCli.sh ls /
+      register: zkcli_status
+
+    - name: Check if marathon is registered in ZooKeeper
+      debug: var=zkcli_status
+
+    - name: Wait for Marathon to be up
+      wait_for: host="{{ ansible_host }}" port=8080 state=started delay=3 timeout=15
+
+    - name: Test for Marathon info endpoint
+      uri:
+        url: "http://{{ ansible_host }}:8080/v2/info"
+        method: GET
+      register: response
+
+    - name: Marathon url check
+      debug: var=response
